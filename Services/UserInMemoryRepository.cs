@@ -12,7 +12,7 @@ class UserInMemoryRepository : IUserRepository
 
     public User Create(User user)
     {
-        return new User
+        var newUser = new User
         {
             Id = Guid.NewGuid(),
             FirstName = user.FirstName,
@@ -20,6 +20,8 @@ class UserInMemoryRepository : IUserRepository
             Email = user.Email,
             Password = user.Password
         };
+        _users.Add(newUser);
+        return newUser;
     }
 
     public bool Delete(Guid id)
