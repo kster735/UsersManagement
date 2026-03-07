@@ -1,3 +1,5 @@
+namespace UsersManagement.Models;
+
 class User
 {
     public Guid Id { get; set; }
