@@ -1,0 +1,57 @@
+## Build artifacts
+bin/
+obj/
+out/
+artifacts/
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+
+## .NET
+project.lock.json
+project.fragment.lock.json
+*.pidb
+*.svclog
+*.pdb
+
+## Logs
+*.log
+
+## Environment & secrets
+*.env
+*.env.*
+appsettings.Development.json
+appsettings.Local.json
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+## OS-specific
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Docker
+docker-compose.override.yml
+
+## Publish output
+publish/
