@@ -12,6 +12,12 @@ class UserInMemoryRepository : IUserRepository
 
     public User Create(User user)
     {
+        var existingUser = _users.FirstOrDefault(u => u.Email == user.Email);
+        if (existingUser != null)
+        {
+            throw new InvalidOperationException("Email already exists.");
+        }
+
         var newUser = new User
         {
             Id = Guid.NewGuid(),
@@ -20,6 +26,9 @@ class UserInMemoryRepository : IUserRepository
             Email = user.Email,
             Password = user.Password
         };
+
+
+
         _users.Add(newUser);
         return newUser;
     }
