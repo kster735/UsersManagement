@@ -4,7 +4,13 @@ namespace UsersManagement.Services;
 
 class UserInMemoryRepository : IUserRepository
 {
-    private static readonly ILogger<UserInMemoryRepository> _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<UserInMemoryRepository>();
+    private readonly ILogger<UserInMemoryRepository> _logger;
+
+    public UserInMemoryRepository(ILogger<UserInMemoryRepository> logger)
+    {
+        _logger = logger;
+    }
+
     private readonly List<User> _users = new()
     {
         new User { Id = Guid.NewGuid(), FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Password = "password123" },
