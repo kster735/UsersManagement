@@ -55,3 +55,10 @@ docker-compose.override.yml
 
 ## Publish output
 publish/
+
+## Ignore logs
+logs/*.txt
+/logs/
+/log/
+/*.log
+
