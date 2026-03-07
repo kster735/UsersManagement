@@ -42,8 +42,15 @@ app.MapPost("/users", IResult (User user, IUserRepository userInMemoryRepository
     var errors = user.Validate();
     if (errors.Count > 0)
         return TypedResults.BadRequest(errors);
-    var created = userInMemoryRepository.Create(user);
-    return TypedResults.Created($"/users/{created.Id}", created);
+    try
+    {
+        var created = userInMemoryRepository.Create(user);
+        return TypedResults.Created($"/users/{created.Id}", created);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return TypedResults.BadRequest(ex.Message);
+    }
 });
 
 // UPDATE user
