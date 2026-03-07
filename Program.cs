@@ -1,3 +1,4 @@
+using UsersManagement.Models;
 using UsersManagement.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ builder.Services.AddSingleton<IUserRepository, UserInMemoryRepository>();
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -17,28 +19,41 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/", () => "User API is running");
+
+// GET all users
+app.MapGet("/users", (IUserRepository userInMemoryRepository) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    return TypedResults.Ok(userInMemoryRepository.GetAll());
+});
+
+// GET user by id
+app.MapGet("/users/{id:Guid}", IResult (Guid id, IUserRepository userInMemoryRepository) =>
+{
+    var user = userInMemoryRepository.GetById(id);
+    return user is not null ? TypedResults.Ok(user) : TypedResults.NotFound();
+});
+
+// CREATE user
+app.MapPost("/users", (User user, IUserRepository userInMemoryRepository) =>
+{
+    var created = userInMemoryRepository.Create(user);
+    return TypedResults.Created($"/users/{created.Id}", created);
+});
+
+// UPDATE user
+app.MapPut("/users/{id:Guid}", IResult (Guid id, User updated, IUserRepository userInMemoryRepository) =>
+{
+    var ok = userInMemoryRepository.Update(id, updated);
+    return ok ? TypedResults.NoContent() : TypedResults.NotFound();
+});
+
+// DELETE user
+app.MapDelete("/users/{id:Guid}", IResult (Guid id, IUserRepository userInMemoryRepository) =>
+{
+    var ok = userInMemoryRepository.Delete(id);
+    return ok ? TypedResults.NoContent() : TypedResults.NotFound();
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
