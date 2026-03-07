@@ -1,5 +1,6 @@
 using UsersManagement.Models;
 using UsersManagement.Services;
+using UsersManagement.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,15 +37,28 @@ app.MapGet("/users/{id:Guid}", IResult (Guid id, IUserRepository userInMemoryRep
 });
 
 // CREATE user
-app.MapPost("/users", (User user, IUserRepository userInMemoryRepository) =>
+app.MapPost("/users", IResult (User user, IUserRepository userInMemoryRepository) =>
 {
-    var created = userInMemoryRepository.Create(user);
-    return TypedResults.Created($"/users/{created.Id}", created);
+    var errors = user.Validate();
+    if (errors.Count > 0)
+        return TypedResults.BadRequest(errors);
+    try
+    {
+        var created = userInMemoryRepository.Create(user);
+        return TypedResults.Created($"/users/{created.Id}", created);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return TypedResults.BadRequest(ex.Message);
+    }
 });
 
 // UPDATE user
 app.MapPut("/users/{id:Guid}", IResult (Guid id, User updated, IUserRepository userInMemoryRepository) =>
 {
+    var errors = updated.Validate();
+    if (errors.Count > 0)
+        return TypedResults.BadRequest(errors);
     var ok = userInMemoryRepository.Update(id, updated);
     return ok ? TypedResults.NoContent() : TypedResults.NotFound();
 });
