@@ -1,12 +1,12 @@
 using UsersManagement.Models;
 
-namespace MinimalUsersApi.Services;
+namespace UsersManagement.Services;
 
-public interface IUserRepository
+interface IUserRepository
 {
     IEnumerable<User> GetAll();
-    User? GetById(int id);
+    User? GetById(Guid id);
     User Create(User user);
-    bool Update(int id, User updated);
-    bool Delete(int id);
+    bool Update(Guid id, User updated);
+    bool Delete(Guid id);
 }
