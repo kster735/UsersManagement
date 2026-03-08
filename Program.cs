@@ -52,7 +52,7 @@ try
         try
         {
             var created = userInMemoryRepository.Create(user);
-            return TypedResults.Created($"/users/{created.Id}", created);
+            return TypedResults.Created($"/users/{created.Id}", created.WithoutPassword());
         }
         catch (InvalidOperationException ex)
         {
@@ -62,7 +62,10 @@ try
 
     app.MapPost("/auth/login", IResult (User user, IUserRepository userInMemoryRepository) =>
     {
-        var existingUser = userInMemoryRepository.GetAll().FirstOrDefault(u => u.Email == user.Email && u.Password == user.Password);
+        var existingUser = userInMemoryRepository.GetAll().FirstOrDefault(
+                u => u.Email == user.Email
+                && HashingPasswords.VerifyPasswordWithSalt(user.Password!, u.Password!, u.Salt!)
+            );
         if (existingUser == null)
             return TypedResults.Unauthorized();
 
