@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UsersManagement.Models;
 
-class User
+public class User
 {
     public Guid Id { get; set; }
 
