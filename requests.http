@@ -1,0 +1,65 @@
+@baseUrl = http://localhost:5094
+@token =
+@userId = 00000000-0000-0000-0000-000000000000
+
+### Register New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "Email": "user@example.com",
+  "Password": "P@ssw0rd123"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "Email": "user@example.com",
+  "Password": "P@ssw0rd123"
+}
+
+> {% client.global.set("token", response.body.token); %}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "Email": "user@example.com",
+  "Password": "P@ssw0rd123"
+}
+
+### Get All Users
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Get One User By Id
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Get Me
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Delete a User
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Update User
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "FirstName": "John",
+  "LastName": "Doe",
+  "Email": "user@example.com",
+  "Password": "P@ssw0rd123"
+}
