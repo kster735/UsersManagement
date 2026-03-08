@@ -81,7 +81,10 @@ class UserInMemoryRepository : IUserRepository
         user.FirstName = updated.FirstName;
         user.LastName = updated.LastName;
         user.Email = updated.Email;
-        user.Password = updated.Password;
+
+        var hashedPassword = HashingPasswords.HashPasswordWithSalt(updated.Password!, user.Salt!);
+
+        user.Password = hashedPassword;
         _logger.LogInformation("User updated successfully: {UserId}", user.Id);
         return true;
     }
