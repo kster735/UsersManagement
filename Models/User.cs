@@ -14,4 +14,7 @@ class User
     [Required]
     [MinLength(6)]
     public string? Password { get; set; }
+
+    public string? Token { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 }
