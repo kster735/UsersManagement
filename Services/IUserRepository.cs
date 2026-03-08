@@ -2,7 +2,7 @@ using UsersManagement.Models;
 
 namespace UsersManagement.Services;
 
-interface IUserRepository
+public interface IUserRepository
 {
     IEnumerable<User> GetAll();
     User? GetById(Guid id);
