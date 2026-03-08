@@ -1,4 +1,6 @@
+using NLog.LayoutRenderers;
 using UsersManagement.Models;
+using UsersManagement.Utils;
 
 namespace UsersManagement.Services;
 
@@ -13,12 +15,28 @@ class UserInMemoryRepository : IUserRepository
 
     private readonly List<User> _users = new()
     {
-        new User { Id = Guid.NewGuid(), FirstName = "John", LastName = "Doe", Email = "john.doe@example.com", Password = "password123" },
-        new User { Id = Guid.NewGuid(), FirstName = "Jane", LastName = "Smith", Email = "jane.smith@example.com", Password = "password456" }
+        new User {
+            Id = Guid.NewGuid(),
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            Salt = HashingPasswords.GenerateSalt(),
+            Password = HashingPasswords.HashPasswordWithSalt("password123", HashingPasswords.GenerateSalt())
+        },
+        new User {
+            Id = Guid.NewGuid(),
+            FirstName = "Jane",
+            LastName = "Smith",
+            Email = "jane.smith@example.com",
+            Salt = HashingPasswords.GenerateSalt(),
+            Password = HashingPasswords.HashPasswordWithSalt("password456", HashingPasswords.GenerateSalt())
+        }
     };
+
 
     public User Create(User user)
     {
+
         var existingUser = _users.FirstOrDefault(u => u.Email == user.Email);
         if (existingUser != null)
         {
@@ -26,13 +44,17 @@ class UserInMemoryRepository : IUserRepository
             throw new InvalidOperationException("Email already exists.");
         }
 
+        user.Salt = HashingPasswords.GenerateSalt();
+        user.Password = HashingPasswords.HashPasswordWithSalt(user.Password!, user.Salt!);
+
         var newUser = new User
         {
             Id = Guid.NewGuid(),
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
-            Password = user.Password
+            Password = user.Password,
+            Salt = user.Salt
         };
 
         _users.Add(newUser);
