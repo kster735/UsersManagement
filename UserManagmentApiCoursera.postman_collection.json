@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "1120c71f-9b1a-494f-a5dc-af63dffd47b0",
-    "name": "UserManagmentApi Coursera",
+    "name": "UserManagmentApiCoursera",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "26244098"
   },
@@ -9,6 +9,9 @@
     {
       "name": "Register New User",
       "request": {
+        "auth": {
+          "type": "noauth"
+        },
         "method": "POST",
         "header": [
           {
@@ -27,12 +30,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/auth/register",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/auth/register",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "auth",
             "register"
@@ -43,6 +44,21 @@
     },
     {
       "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "const token = res.token || res.accessToken || res.access_token || res.jwt;",
+              "if (token) {",
+              "    pm.collectionVariables.set(\"bearerToken\", token);",
+              "}"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -62,12 +78,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/auth/login",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/auth/login",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "auth",
             "login"
@@ -79,16 +93,6 @@
     {
       "name": "Logout",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "WMpWma7cfkmxSIhRciYsjA==",
-              "type": "string"
-            }
-          ]
-        },
         "method": "POST",
         "header": [
           {
@@ -107,12 +111,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/auth/logout",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/auth/logout",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "auth",
             "logout"
@@ -127,16 +129,6 @@
         "disableBodyPruning": true
       },
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "gT2rN/M63EySQvMi8vE1MQ==",
-              "type": "string"
-            }
-          ]
-        },
         "method": "GET",
         "header": [
           {
@@ -174,16 +166,6 @@
         "disableBodyPruning": true
       },
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "gT2rN/M63EySQvMi8vE1MQ==",
-              "type": "string"
-            }
-          ]
-        },
         "method": "GET",
         "header": [
           {
@@ -202,17 +184,16 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/users/c7067c99-53a9-4739-9bf2-9d38fc73863a",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/users/0a002e2b-1a95-4d70-96f3-c13b1541985b",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "users",
-            "c7067c99-53a9-4739-9bf2-9d38fc73863a"
+            "0a002e2b-1a95-4d70-96f3-c13b1541985b"
           ]
-        }
+        },
+        "description": "Here you have to grab one user id from Get All Users and put it manually after .../users/"
       },
       "response": []
     },
@@ -222,16 +203,6 @@
         "disableBodyPruning": true
       },
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "WMpWma7cfkmxSIhRciYsjA==",
-              "type": "string"
-            }
-          ]
-        },
         "method": "GET",
         "header": [
           {
@@ -250,12 +221,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/auth/me",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/auth/me",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "auth",
             "me"
@@ -267,16 +236,6 @@
     {
       "name": "Delete a user",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "rvuFJs5BGUK/pr2W52+Q+w==",
-              "type": "string"
-            }
-          ]
-        },
         "method": "DELETE",
         "header": [
           {
@@ -295,17 +254,16 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/users/c7067c99-53a9-4739-9bf2-9d38fc73863a",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/users/0a002e2b-1a95-4d70-96f3-c13b1541985b",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "users",
-            "c7067c99-53a9-4739-9bf2-9d38fc73863a"
+            "0a002e2b-1a95-4d70-96f3-c13b1541985b"
           ]
-        }
+        },
+        "description": "You can only delete your own user profile while authenticated."
       },
       "response": []
     },
@@ -317,7 +275,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "rvuFJs5BGUK/pr2W52+Q+w==",
+              "value": "{{bearerToken}}",
               "type": "string"
             }
           ]
@@ -340,12 +298,10 @@
           }
         },
         "url": {
-          "raw": "http://localhost:5094/users/68584c0f-3b9f-48bf-8540-3223fef7d1fa",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/users/68584c0f-3b9f-48bf-8540-3223fef7d1fa",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "5094",
           "path": [
             "users",
             "68584c0f-3b9f-48bf-8540-3223fef7d1fa"
@@ -353,6 +309,49 @@
         }
       },
       "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "requests": {},
+        "exec": [
+          "// Collection-level pre-request script placeholder"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "bearerToken",
+      "value": ""
     }
   ]
 }
