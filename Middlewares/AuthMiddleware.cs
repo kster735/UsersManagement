@@ -8,7 +8,9 @@ public class AuthMiddleware
     {
         "/",
         "/auth/register",
-        "/auth/login"
+        "/auth/login",
+        "/scalar/favicon.svg",
+        "/openapi/v1.json",
     };
 
     public AuthMiddleware(RequestDelegate next)
@@ -20,8 +22,12 @@ public class AuthMiddleware
     {
         var path = context.Request.Path.Value?.ToLower();
 
+
+
         // Allow public routes
-        if (path != null && PublicPaths.Contains(path))
+        // NOTE: Scalar uses "/scalar" (no trailing slash) as well as "/scalar/".
+        // Make sure we allow both, otherwise requests to /scalar will be blocked by auth.
+        if (path != null && (PublicPaths.Contains(path) || path.StartsWith("/scalar")))
         {
             await _next(context);
             return;
