@@ -4,6 +4,8 @@ using UsersManagement.Utils;
 
 using NLog;
 using NLog.Web;
+using Scalar.AspNetCore;
+using Microsoft.OpenApi;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("NLog.config").GetCurrentClassLogger();
 
@@ -19,10 +21,12 @@ try
     // Configure NLog
     builder.Host.UseNLog();
 
+    // builder.Services.AddEndpointsApiExplorer();
     // Add services to the container.
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
     builder.Services.AddOpenApi();
-    builder.Services.AddSwaggerGen();
+
 
     builder.Services.AddSingleton<IUserRepository, UserInMemoryRepository>();
 
@@ -34,12 +38,10 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        app.MapScalarApiReference();
     }
 
     app.UseHttpsRedirection();
-
 
     app.UseMiddleware<AuthMiddleware>();
 
@@ -77,6 +79,7 @@ try
         existingUser.ExpiresAt = DateTime.UtcNow.AddHours(1);
         return TypedResults.Ok(existingUser.WithoutPassword());
     });
+
 
 
     app.MapPost("/auth/logout", IResult (HttpContext context, IUserRepository userInMemoryRepository) =>
