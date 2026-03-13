@@ -22,8 +22,6 @@ public class AuthMiddleware
     {
         var path = context.Request.Path.Value?.ToLower();
 
-
-
         // Allow public routes
         // NOTE: Scalar uses "/scalar" (no trailing slash) as well as "/scalar/".
         // Make sure we allow both, otherwise requests to /scalar will be blocked by auth.
@@ -51,7 +49,7 @@ public class AuthMiddleware
         if (token is null)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsync("Missing authentication token.");
+            await context.Response.WriteAsJsonAsync(new ResponseMessage("Missing authentication token."));
             return;
         }
 
@@ -61,7 +59,7 @@ public class AuthMiddleware
         if (user is null || user.ExpiresAt < DateTime.UtcNow)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsync("Invalid or expired token.");
+            await context.Response.WriteAsJsonAsync(new ResponseMessage("Invalid or expired token."));
             return;
         }
 
