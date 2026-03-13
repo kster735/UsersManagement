@@ -6,6 +6,9 @@ using NLog;
 using NLog.Web;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Http.HttpResults;
+using UsersManagement.DTOs;
+using UsersManagement.Requests;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("NLog.config").GetCurrentClassLogger();
 
@@ -45,34 +48,43 @@ try
 
     app.UseMiddleware<AuthMiddleware>();
 
-    app.MapGet("/", () => "User API is running");
-
+    app.MapGet("/", Ok<ResponseMessage> () => TypedResults.Ok(new ResponseMessage("User API is running")));
 
     // CREATE user
-    app.MapPost("/auth/register", IResult (User user, IUserRepository userInMemoryRepository) =>
+    app.MapPost(
+        "/auth/register",
+        Results<Created<UserNoPasswordDTO>,
+        BadRequest<List<string>>,
+        BadRequest<ResponseMessage>> (SignupRequest user, IUserRepository userInMemoryRepository) =>
     {
         var errors = user.Validate();
         if (errors.Count > 0)
             return TypedResults.BadRequest(errors);
         try
         {
-            var created = userInMemoryRepository.Create(user);
-            return TypedResults.Created($"/users/{created.Id}", created.WithoutPassword());
+            User created = userInMemoryRepository.Create(new User
+            {
+                Email = user.Email,
+                Password = user.Password
+            });
+            return TypedResults.Created<UserNoPasswordDTO>($"/user/{created.Id}", created.WithoutPassword());
         }
         catch (InvalidOperationException ex)
         {
-            return TypedResults.BadRequest(ex.Message);
+            return TypedResults.BadRequest(new ResponseMessage(ex.Message));
         }
     });
 
-    app.MapPost("/auth/login", IResult (User user, IUserRepository userInMemoryRepository) =>
+    app.MapPost(
+        "/auth/login",
+        Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (SignInRequest user, IUserRepository userInMemoryRepository) =>
     {
         var existingUser = userInMemoryRepository.GetAll().FirstOrDefault(
                 u => u.Email == user.Email
                 && HashingPasswords.VerifyPasswordWithSalt(user.Password!, u.Password!, u.Salt!)
             );
         if (existingUser == null)
-            return TypedResults.Unauthorized();
+            return TypedResults.Json(new ResponseMessage("Invalid email or password"), statusCode: 401);
 
         // Generate a simple token (for demonstration purposes only)
         existingUser.Token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -82,45 +94,47 @@ try
 
 
 
-    app.MapPost("/auth/logout", IResult (HttpContext context, IUserRepository userInMemoryRepository) =>
+    app.MapPost(
+        "/auth/logout",
+        Results<Ok<ResponseMessage>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (HttpContext context, IUserRepository userInMemoryRepository) =>
     {
         if (context.Items.TryGetValue("User", out var userObj) && userObj is User user)
         {
             user.Token = null;
             user.ExpiresAt = null;
-            return TypedResults.Ok("Logged out successfully.");
+            return TypedResults.Ok(new ResponseMessage("Logged out successfully."));
         }
-        return TypedResults.Unauthorized();
+        return TypedResults.Json(new ResponseMessage("Unauthorized"), statusCode: 401);
     });
 
 
-    app.MapGet("/auth/me", IResult (HttpContext context) =>
+    app.MapGet("/auth/me", Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (HttpContext context) =>
     {
         if (context.Items.TryGetValue("User", out var userObj) && userObj is User user)
         {
             return TypedResults.Ok(user.WithoutPassword());
         }
-        return TypedResults.Unauthorized();
+        return TypedResults.Json(new ResponseMessage("You are not authenticated."), statusCode: 401);
     });
 
 
     // GET all users
-    app.MapGet("/users", (IUserRepository userInMemoryRepository) =>
+    app.MapGet("/users", Results<Ok<IEnumerable<UserNoPasswordNoTokenDTO>>, BadRequest<ResponseMessage>> (IUserRepository userInMemoryRepository) =>
     {
         return TypedResults.Ok(userInMemoryRepository.GetAll().Select(u => u.WithoutTokensOrPassword()));
     });
 
     // GET user by id
-    app.MapGet("/users/{id:Guid}", IResult (Guid id, IUserRepository userInMemoryRepository) =>
+    app.MapGet("/users/{id:Guid}", Results<Ok<UserNoPasswordNoTokenDTO>, NotFound<ResponseMessage>> (Guid id, IUserRepository userInMemoryRepository) =>
     {
         var user = userInMemoryRepository.GetById(id);
-        return user is not null ? TypedResults.Ok(user.WithoutTokensOrPassword()) : TypedResults.NotFound();
+        return user is not null ? TypedResults.Ok(user.WithoutTokensOrPassword()) : TypedResults.NotFound(new ResponseMessage("User not found."));
     });
 
 
 
     // UPDATE user
-    app.MapPut("/users/{id:Guid}", IResult (
+    app.MapPut("/users/{id:Guid}", Results<NoContent, BadRequest<List<string>>, NotFound, UnauthorizedHttpResult> (
             Guid id,
             User updated,
             HttpContext context,
@@ -138,7 +152,7 @@ try
     });
 
     // DELETE user
-    app.MapDelete("/users/{id:Guid}", IResult (
+    app.MapDelete("/users/{id:Guid}", Results<UnauthorizedHttpResult, NoContent, NotFound> (
         Guid id,
         HttpContext context,
         IUserRepository userInMemoryRepository) =>
@@ -165,4 +179,4 @@ finally
 }
 
 
-
+readonly record struct ResponseMessage(string Message);
