@@ -48,14 +48,19 @@ try
 
     app.UseMiddleware<AuthMiddleware>();
 
-    app.MapGet("/", Ok<ResponseMessage> () => TypedResults.Ok(new ResponseMessage("User API is running")));
+    app.MapGet("/", Ok<ResponseMessage> () => TypedResults.Ok(new ResponseMessage("User API is running")))
+        .Produces<ResponseMessage>(statusCode: 200)
+        .WithName("Root")
+        .WithSummary("Root endpoint")
+        .WithDescription("Returns a simple message indicating that the User API is running.")
+        .WithTags("General");
 
     // CREATE user
     app.MapPost(
         "/auth/register",
         Results<Created<UserNoPasswordDTO>,
         BadRequest<List<string>>,
-        BadRequest<ResponseMessage>> (SignupRequest user, IUserRepository userInMemoryRepository) =>
+        InternalServerError<ResponseMessage>> (SignupRequest user, IUserRepository userInMemoryRepository) =>
     {
         var errors = user.Validate();
         if (errors.Count > 0)
@@ -71,9 +76,16 @@ try
         }
         catch (InvalidOperationException ex)
         {
-            return TypedResults.BadRequest(new ResponseMessage(ex.Message));
+            return TypedResults.InternalServerError(new ResponseMessage(ex.Message));
         }
-    });
+    })
+    .Produces<UserNoPasswordDTO>(statusCode: 201)
+    .Produces<List<string>>(statusCode: 400)
+    .Produces<ResponseMessage>(statusCode: 500)
+    .WithName("Register")
+    .WithSummary("Register a new user")
+    .WithDescription("Creates a new user account with the provided email and password. Returns the created user without the password.")
+    .WithTags("Authentication");
 
     app.MapPost(
         "/auth/login",
@@ -90,7 +102,13 @@ try
         existingUser.Token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         existingUser.ExpiresAt = DateTime.UtcNow.AddHours(1);
         return TypedResults.Ok(existingUser.WithoutPassword());
-    });
+    })
+    .Produces<UserNoPasswordDTO>(statusCode: 200)
+    .Produces<ResponseMessage>(statusCode: 401)
+    .WithName("Login")
+    .WithSummary("Authenticate a user")
+    .WithDescription("Authenticates a user with the provided email and password. Returns the authenticated user without the password if successful, or an error message if authentication fails.")
+    .WithTags("Authentication");
 
 
 
@@ -105,7 +123,13 @@ try
             return TypedResults.Ok(new ResponseMessage("Logged out successfully."));
         }
         return TypedResults.Json(new ResponseMessage("Unauthorized"), statusCode: 401);
-    });
+    })
+    .Produces<ResponseMessage>(statusCode: 200)
+    .Produces<ResponseMessage>(statusCode: 401)
+    .WithName("Logout")
+    .WithSummary("Logout a user")
+    .WithDescription("Logs out the currently authenticated user by invalidating their token. Returns a success message if the user was logged out, or an error message if the user is not authenticated.")
+    .WithTags("Authentication");
 
 
     app.MapGet("/auth/me", Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (HttpContext context) =>
@@ -115,30 +139,47 @@ try
             return TypedResults.Ok(user.WithoutPassword());
         }
         return TypedResults.Json(new ResponseMessage("You are not authenticated."), statusCode: 401);
-    });
+    })
+    .Produces<UserNoPasswordDTO>(statusCode: 200)
+    .Produces<ResponseMessage>(statusCode: 401)
+    .WithName("GetCurrentUser")
+    .WithSummary("Get current authenticated user")
+    .WithDescription("Retrieves the currently authenticated user without the password.")
+    .WithTags("User Management");
 
 
     // GET all users
     app.MapGet("/users", Results<Ok<IEnumerable<UserNoPasswordNoTokenDTO>>, BadRequest<ResponseMessage>> (IUserRepository userInMemoryRepository) =>
     {
         return TypedResults.Ok(userInMemoryRepository.GetAll().Select(u => u.WithoutTokensOrPassword()));
-    });
+    })
+    .Produces<IEnumerable<UserNoPasswordNoTokenDTO>>(statusCode: 200)
+    .Produces<ResponseMessage>(statusCode: 400)
+    .WithName("GetAllUsers")
+    .WithSummary("Get all users")
+    .WithDescription("Retrieves a list of all users without the password or token.")
+    .WithTags("User Management");
 
     // GET user by id
     app.MapGet("/users/{id:Guid}", Results<Ok<UserNoPasswordNoTokenDTO>, NotFound<ResponseMessage>> (Guid id, IUserRepository userInMemoryRepository) =>
     {
         var user = userInMemoryRepository.GetById(id);
         return user is not null ? TypedResults.Ok(user.WithoutTokensOrPassword()) : TypedResults.NotFound(new ResponseMessage("User not found."));
-    });
-
+    })
+    .Produces<UserNoPasswordNoTokenDTO>(statusCode: 200)
+    .Produces<ResponseMessage>(statusCode: 404)
+    .WithName("GetUserById")
+    .WithSummary("Get user by ID")
+    .WithDescription("Retrieves a user by their unique identifier without the password or token.")
+    .WithTags("User Management");
 
 
     // UPDATE user
     app.MapPut("/users/{id:Guid}", Results<NoContent, BadRequest<List<string>>, NotFound, UnauthorizedHttpResult> (
-            Guid id,
-            User updated,
-            HttpContext context,
-            IUserRepository userInMemoryRepository) =>
+        Guid id,
+        User updated,
+        HttpContext context,
+        IUserRepository userInMemoryRepository) =>
     {
         if (context.Items["User"] is not User currentUser || currentUser.Id != id)
         {
@@ -149,21 +190,34 @@ try
             return TypedResults.BadRequest(errors);
         var ok = userInMemoryRepository.Update(id, updated);
         return ok ? TypedResults.NoContent() : TypedResults.NotFound();
-    });
+    })
+    .Produces(statusCode: 204)
+    .Produces<List<string>>(statusCode: 400)
+    .WithName("UpdateUser")
+    .WithSummary("Update a user")
+    .WithDescription("Updates the details of an existing user.")
+    .WithTags("User Management");
 
     // DELETE user
-    app.MapDelete("/users/{id:Guid}", Results<UnauthorizedHttpResult, NoContent, NotFound> (
+    app.MapDelete("/users/{id:Guid}", Results<UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>, NoContent, NotFound> (
         Guid id,
         HttpContext context,
         IUserRepository userInMemoryRepository) =>
     {
         if (context.Items["User"] is not User currentUser || currentUser.Id != id)
         {
-            return TypedResults.Unauthorized();
+            return TypedResults.Json(new ResponseMessage("Unauthorized"), statusCode: 401);
         }
         var ok = userInMemoryRepository.Delete(id);
         return ok ? TypedResults.NoContent() : TypedResults.NotFound();
-    });
+    })
+    .Produces(statusCode: 204)
+    .Produces<ResponseMessage>(statusCode: 401)
+    .Produces<ResponseMessage>(statusCode: 404)
+    .WithName("DeleteUser")
+    .WithSummary("Delete a user")
+    .WithDescription("Deletes an existing user.")
+    .WithTags("User Management");
 
     app.Run();
 
