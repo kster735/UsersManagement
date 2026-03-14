@@ -132,6 +132,13 @@ try
         {
             user.Token = null;
             user.ExpiresAt = null;
+
+            if (context.Request.Cookies.TryGetValue("auth_token", out var cookieToken))
+            {
+                var res = cookieToken.Remove(0);
+                logger.Info($"cookie was removed. res: {res}");
+            }
+
             return TypedResults.Ok(new ResponseMessage("Logged out successfully."));
         }
         return TypedResults.Json(new ResponseMessage("Unauthorized"), statusCode: 401);
@@ -141,8 +148,8 @@ try
     .WithName("Logout")
     .WithSummary("Logout a user")
     .WithDescription("Logs out the currently authenticated user by invalidating their token. Returns a success message if the user was logged out, or an error message if the user is not authenticated.")
-    .WithTags("Authentication")
-    .RequireAuthorization();
+    .WithTags("Authentication");
+
 
 
     app.MapGet("/auth/me", Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (HttpContext context) =>
@@ -158,9 +165,7 @@ try
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user")
     .WithDescription("Retrieves the currently authenticated user without the password.")
-    .WithTags("User Management")
-    .RequireAuthorization();
-
+    .WithTags("User Management");
 
     // GET all users
     app.MapGet("/users", Results<Ok<IEnumerable<UserNoPasswordNoTokenDTO>>, BadRequest<ResponseMessage>> (IUserRepository userInMemoryRepository) =>
@@ -172,8 +177,8 @@ try
     .WithName("GetAllUsers")
     .WithSummary("Get all users")
     .WithDescription("Retrieves a list of all users without the password or token.")
-    .WithTags("User Management")
-    .RequireAuthorization();
+    .WithTags("User Management");
+
 
     // GET user by id
     app.MapGet("/users/{id:Guid}", Results<Ok<UserNoPasswordNoTokenDTO>, NotFound<ResponseMessage>> (Guid id, IUserRepository userInMemoryRepository) =>
@@ -186,8 +191,7 @@ try
     .WithName("GetUserById")
     .WithSummary("Get user by ID")
     .WithDescription("Retrieves a user by their unique identifier without the password or token.")
-    .WithTags("User Management")
-    .RequireAuthorization();
+    .WithTags("User Management");
 
 
     // UPDATE user
@@ -212,8 +216,8 @@ try
     .WithName("UpdateUser")
     .WithSummary("Update a user")
     .WithDescription("Updates the details of an existing user.")
-    .WithTags("User Management")
-    .RequireAuthorization();
+    .WithTags("User Management");
+
 
     // DELETE user
     app.MapDelete("/users/{id:Guid}", Results<UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>, NoContent, NotFound> (
@@ -234,8 +238,8 @@ try
     .WithName("DeleteUser")
     .WithSummary("Delete a user")
     .WithDescription("Deletes an existing user.")
-    .WithTags("User Management")
-    .RequireAuthorization();
+    .WithTags("User Management");
+
 
     app.Run();
 
