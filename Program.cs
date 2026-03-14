@@ -133,11 +133,18 @@ try
             user.Token = null;
             user.ExpiresAt = null;
 
-            if (context.Request.Cookies.TryGetValue("auth_token", out var cookieToken))
-            {
-                var res = cookieToken.Remove(0);
-                logger.Info($"cookie was removed. res: {res}");
-            }
+            // Remove cookie
+            context.Response.Cookies.Append(
+                "auth_token",
+                "",
+                new CookieOptions
+                {
+                    Expires = DateTime.UnixEpoch,
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict
+                }
+            );
 
             return TypedResults.Ok(new ResponseMessage("Logged out successfully."));
         }
