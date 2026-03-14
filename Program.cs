@@ -32,9 +32,7 @@ try
 
     builder.Services.AddSingleton<IUserRepository, UserInMemoryRepository>();
 
-
     var app = builder.Build();
-
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
@@ -90,7 +88,7 @@ try
 
     app.MapPost(
         "/auth/login",
-        Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (SignInRequest user, IUserRepository userInMemoryRepository) =>
+        Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (SignInRequest user, HttpContext context, IUserRepository userInMemoryRepository) =>
     {
         var existingUser = userInMemoryRepository.GetAll().FirstOrDefault(
                 u => u.Email == user.Email
@@ -102,6 +100,18 @@ try
         // Generate a simple token (for demonstration purposes only)
         existingUser.Token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         existingUser.ExpiresAt = DateTime.UtcNow.AddHours(1);
+
+
+        // Add an http-only cookie for SPA clients (optional, can be used instead of Authorization header)
+        // NOTE: If you use cookies, make sure to configure CORS and CSRF protections appropriately.
+        context.Response.Cookies.Append("auth_token", existingUser.Token!, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true, // required for HTTPS
+            SameSite = SameSiteMode.Strict,
+            Expires = existingUser.ExpiresAt
+        });
+
         return TypedResults.Ok(existingUser.WithoutPassword());
     })
     .Produces<UserNoPasswordDTO>(statusCode: 200)
