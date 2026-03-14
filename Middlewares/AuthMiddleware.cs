@@ -34,6 +34,8 @@ public class AuthMiddleware
         // Extract token
         string? token = null;
 
+        // First check Authorization header (Bearer token) - this is the most common approach for APIs
+
         if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
         {
             var header = authHeader.ToString();
@@ -44,6 +46,12 @@ public class AuthMiddleware
         if (token is null && context.Request.Headers.TryGetValue("X-Api-Key", out var apiKey))
         {
             token = apiKey.ToString();
+        }
+
+        // If not found in headers, check cookies (for SPA clients)
+        if (token is null && context.Request.Cookies.TryGetValue("auth_token", out var cookieToken))
+        {
+            token = cookieToken;
         }
 
         if (token is null)

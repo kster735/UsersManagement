@@ -30,12 +30,9 @@ try
 
     builder.Services.AddOpenApi();
 
-
     builder.Services.AddSingleton<IUserRepository, UserInMemoryRepository>();
 
-
     var app = builder.Build();
-
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
@@ -53,7 +50,8 @@ try
         .WithName("Root")
         .WithSummary("Root endpoint")
         .WithDescription("Returns a simple message indicating that the User API is running.")
-        .WithTags("General");
+        .WithTags("General")
+        .AllowAnonymous();
 
     // CREATE user
     app.MapPost(
@@ -85,11 +83,12 @@ try
     .WithName("Register")
     .WithSummary("Register a new user")
     .WithDescription("Creates a new user account with the provided email and password. Returns the created user without the password.")
-    .WithTags("Authentication");
+    .WithTags("Authentication")
+    .AllowAnonymous();
 
     app.MapPost(
         "/auth/login",
-        Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (SignInRequest user, IUserRepository userInMemoryRepository) =>
+        Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (SignInRequest user, HttpContext context, IUserRepository userInMemoryRepository) =>
     {
         var existingUser = userInMemoryRepository.GetAll().FirstOrDefault(
                 u => u.Email == user.Email
@@ -101,6 +100,18 @@ try
         // Generate a simple token (for demonstration purposes only)
         existingUser.Token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         existingUser.ExpiresAt = DateTime.UtcNow.AddHours(1);
+
+
+        // Add an http-only cookie for SPA clients (optional, can be used instead of Authorization header)
+        // NOTE: If you use cookies, make sure to configure CORS and CSRF protections appropriately.
+        context.Response.Cookies.Append("auth_token", existingUser.Token!, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true, // required for HTTPS
+            SameSite = SameSiteMode.Strict,
+            Expires = existingUser.ExpiresAt
+        });
+
         return TypedResults.Ok(existingUser.WithoutPassword());
     })
     .Produces<UserNoPasswordDTO>(statusCode: 200)
@@ -108,7 +119,8 @@ try
     .WithName("Login")
     .WithSummary("Authenticate a user")
     .WithDescription("Authenticates a user with the provided email and password. Returns the authenticated user without the password if successful, or an error message if authentication fails.")
-    .WithTags("Authentication");
+    .WithTags("Authentication")
+    .AllowAnonymous();
 
 
 
@@ -129,7 +141,8 @@ try
     .WithName("Logout")
     .WithSummary("Logout a user")
     .WithDescription("Logs out the currently authenticated user by invalidating their token. Returns a success message if the user was logged out, or an error message if the user is not authenticated.")
-    .WithTags("Authentication");
+    .WithTags("Authentication")
+    .RequireAuthorization();
 
 
     app.MapGet("/auth/me", Results<Ok<UserNoPasswordDTO>, UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>> (HttpContext context) =>
@@ -145,7 +158,8 @@ try
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user")
     .WithDescription("Retrieves the currently authenticated user without the password.")
-    .WithTags("User Management");
+    .WithTags("User Management")
+    .RequireAuthorization();
 
 
     // GET all users
@@ -158,7 +172,8 @@ try
     .WithName("GetAllUsers")
     .WithSummary("Get all users")
     .WithDescription("Retrieves a list of all users without the password or token.")
-    .WithTags("User Management");
+    .WithTags("User Management")
+    .RequireAuthorization();
 
     // GET user by id
     app.MapGet("/users/{id:Guid}", Results<Ok<UserNoPasswordNoTokenDTO>, NotFound<ResponseMessage>> (Guid id, IUserRepository userInMemoryRepository) =>
@@ -171,7 +186,8 @@ try
     .WithName("GetUserById")
     .WithSummary("Get user by ID")
     .WithDescription("Retrieves a user by their unique identifier without the password or token.")
-    .WithTags("User Management");
+    .WithTags("User Management")
+    .RequireAuthorization();
 
 
     // UPDATE user
@@ -196,7 +212,8 @@ try
     .WithName("UpdateUser")
     .WithSummary("Update a user")
     .WithDescription("Updates the details of an existing user.")
-    .WithTags("User Management");
+    .WithTags("User Management")
+    .RequireAuthorization();
 
     // DELETE user
     app.MapDelete("/users/{id:Guid}", Results<UnauthorizedHttpResult, JsonHttpResult<ResponseMessage>, NoContent, NotFound> (
@@ -217,7 +234,8 @@ try
     .WithName("DeleteUser")
     .WithSummary("Delete a user")
     .WithDescription("Deletes an existing user.")
-    .WithTags("User Management");
+    .WithTags("User Management")
+    .RequireAuthorization();
 
     app.Run();
 
@@ -231,6 +249,5 @@ finally
 {
     LogManager.Shutdown();
 }
-
 
 readonly record struct ResponseMessage(string Message);

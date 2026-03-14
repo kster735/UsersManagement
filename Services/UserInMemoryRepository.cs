@@ -1,13 +1,12 @@
-using NLog.LayoutRenderers;
 using UsersManagement.Models;
-using UsersManagement.Utils;
 
 namespace UsersManagement.Services;
 
 class UserInMemoryRepository : IUserRepository
 {
     private readonly ILogger<UserInMemoryRepository> _logger;
-
+    private static readonly byte[] _salt1 = HashingPasswords.GenerateSalt();
+    private static readonly byte[] _salt2 = HashingPasswords.GenerateSalt();
     public UserInMemoryRepository(ILogger<UserInMemoryRepository> logger)
     {
         _logger = logger;
@@ -15,21 +14,29 @@ class UserInMemoryRepository : IUserRepository
 
     private readonly List<User> _users = new()
     {
-        new User {
+        new User{
             Id = Guid.NewGuid(),
             FirstName = "John",
             LastName = "Doe",
             Email = "john.doe@example.com",
-            Salt = HashingPasswords.GenerateSalt(),
-            Password = HashingPasswords.HashPasswordWithSalt("password123", HashingPasswords.GenerateSalt())
+            Salt = _salt1,
+            Password = HashingPasswords.HashPasswordWithSalt("password123", _salt1)
         },
         new User {
             Id = Guid.NewGuid(),
             FirstName = "Jane",
             LastName = "Smith",
             Email = "jane.smith@example.com",
-            Salt = HashingPasswords.GenerateSalt(),
-            Password = HashingPasswords.HashPasswordWithSalt("password456", HashingPasswords.GenerateSalt())
+            Salt = _salt2,
+            Password = HashingPasswords.HashPasswordWithSalt("password456", _salt2)
+        },
+        new User {
+            Id = Guid.NewGuid(),
+            FirstName = "A",
+            LastName = "A",
+            Email = "a@a.com",
+            Salt = _salt2,
+            Password = HashingPasswords.HashPasswordWithSalt("123456", _salt2)
         }
     };
 
