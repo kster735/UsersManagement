@@ -5,8 +5,9 @@
 This is a simple **authenticated Bearer-token API** for managing users. It provides endpoints to:
 
 - Register a user (`/auth/register`)
-- Login and obtain a Bearer token (`/auth/login`)
+- Login and obtain a Bearer token (`/auth/login`) also sending a cookie for SPA (Single Page Application) sessions
 - Use the token to access protected endpoints
+- Checking for cookies for SPA sessions
 
 After login, the user receives a token that must be sent in the `Authorization: Bearer <token>` header for protected routes.
 
@@ -75,7 +76,9 @@ Scalar is exposed in development mode at:
 
 - `http://localhost:5094/scalar`
 
-If Scalar is working, you should see a UI that allows you to explore the API and send requests. You can use Scalar’s **Authorize** button to enter a Bearer token and have it applied to protected endpoints.
+If Scalar is working, you should see a UI that allows you to explore the API and send requests.
+With scalar, you have to add the `Authorization: Bearer <token>` header manuall to access protected endpoints.
+Some endpoints need the user.Id as a url parameter, you can get it from the token payload or from the response of the `/auth/login` or `/auth/me` endpoint.payload
 
 ---
 
