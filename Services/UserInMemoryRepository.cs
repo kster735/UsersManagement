@@ -1,6 +1,4 @@
-using NLog.LayoutRenderers;
 using UsersManagement.Models;
-using UsersManagement.Utils;
 
 namespace UsersManagement.Services;
 
@@ -31,6 +29,14 @@ class UserInMemoryRepository : IUserRepository
             Email = "jane.smith@example.com",
             Salt = _salt2,
             Password = HashingPasswords.HashPasswordWithSalt("password456", _salt2)
+        },
+        new User {
+            Id = Guid.NewGuid(),
+            FirstName = "A",
+            LastName = "A",
+            Email = "a@a.com",
+            Salt = _salt2,
+            Password = HashingPasswords.HashPasswordWithSalt("123456", _salt2)
         }
     };
 
